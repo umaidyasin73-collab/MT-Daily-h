@@ -36,6 +36,13 @@ export async function captureWithSafeStylesheets(
   element: HTMLElement,
   options: Parameters<typeof html2canvas>[1]
 ): ReturnType<typeof html2canvas> {
+  // Save original scroll positions
+  const originalScrollX = window.scrollX;
+  const originalScrollY = window.scrollY;
+
+  // Scroll to top-left of the viewport to completely avoid any scrolling/viewport cuts in html2canvas
+  window.scrollTo(0, 0);
+
   const stylesBackup: Array<
     | { type: 'style'; element: HTMLStyleElement; originalText: string }
     | { type: 'link'; element: HTMLLinkElement; originalDisabled: boolean }
@@ -45,32 +52,41 @@ export async function captureWithSafeStylesheets(
   const originalGetComputedStyle = window.getComputedStyle;
 
   try {
-    // 1. Monkey-patch getComputedStyle to intercept oklch values returned by browser computed properties
+    // 1. Monkey-patch getComputedStyle safely using prototype delegation instead of Proxy
+    // This avoids throwing TypeErrors on non-configurable/non-writable internal browser properties
     window.getComputedStyle = function (elt, pseudoElt) {
       const style = originalGetComputedStyle(elt, pseudoElt);
-      
-      return new Proxy(style, {
-        get(target, prop) {
-          if (prop === 'getPropertyValue') {
-            return function (propertyName: string) {
-              const val = target.getPropertyValue(propertyName);
-              if (typeof val === 'string' && val.includes('oklch')) {
-                return replaceOklchWithFallback(val);
-              }
-              return val;
-            };
-          }
-          
-          const val = Reflect.get(target, prop);
-          if (typeof val === 'string' && val.includes('oklch')) {
-            return replaceOklchWithFallback(val);
-          }
-          if (typeof val === 'function') {
-            return val.bind(target);
-          }
-          return val;
+      const wrapper = Object.create(style);
+
+      wrapper.getPropertyValue = function (propertyName: string) {
+        const val = style.getPropertyValue(propertyName);
+        if (typeof val === 'string' && val.includes('oklch')) {
+          return replaceOklchWithFallback(val);
         }
-      });
+        return val;
+      };
+
+      const colorProps = [
+        'color', 'backgroundColor', 'borderColor', 
+        'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor', 
+        'fill', 'stroke'
+      ];
+      
+      for (const prop of colorProps) {
+        Object.defineProperty(wrapper, prop, {
+          get() {
+            const val = (style as any)[prop];
+            if (typeof val === 'string' && val.includes('oklch')) {
+              return replaceOklchWithFallback(val);
+            }
+            return val;
+          },
+          configurable: true,
+          enumerable: true
+        });
+      }
+
+      return wrapper;
     };
 
     // 2. Read and replace oklch in accessible style tags and link tags
@@ -133,11 +149,18 @@ export async function captureWithSafeStylesheets(
       }
     }
 
-    // Call html2canvas with the temporary clean styles and proxies in place
-    return await html2canvas(element, options);
+    // Call html2canvas with the temporary clean styles, forcing scroll options to 0 since we scrolled to top
+    return await html2canvas(element, {
+      ...options,
+      scrollX: 0,
+      scrollY: 0,
+    });
   } finally {
     // Restore original getComputedStyle
     window.getComputedStyle = originalGetComputedStyle;
+
+    // Restore original scroll positions
+    window.scrollTo(originalScrollX, originalScrollY);
 
     // Restore original stylesheets
     for (const backup of stylesBackup) {

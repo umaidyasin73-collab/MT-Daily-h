@@ -55,6 +55,14 @@ export default function App() {
   useEffect(() => {
     setEntries(loadEntriesFromStorage());
     setCities(loadCitiesFromStorage());
+    try {
+      const raw = localStorage.getItem('musa_traders_prev_overrides_v2');
+      if (raw) {
+        setPrevOverrides(JSON.parse(raw));
+      }
+    } catch (e) {
+      console.error('Failed to load overrides from storage', e);
+    }
   }, []);
 
   // Save changes to storage whenever state updates
@@ -66,6 +74,91 @@ export default function App() {
   const handleUpdateCities = (updated: string[]) => {
     setCities(updated);
     saveCitiesToStorage(updated);
+  };
+
+  const handleExportBackup = () => {
+    const backupData = {
+      version: '2.0',
+      exportedAt: new Date().toISOString(),
+      entries: loadEntriesFromStorage(),
+      cities: loadCitiesFromStorage(),
+      prevOverrides: (() => {
+        try {
+          const raw = localStorage.getItem('musa_traders_prev_overrides_v2');
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })()
+    };
+    
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `musa_traders_backup_${timestamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(language === 'en' ? 'Backup file downloaded successfully!' : 'بیک اپ فائل کامیابی سے ڈاؤن لوڈ ہو گئی!', 'success');
+  };
+
+  const handleImportBackup = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const rawText = e.target?.result;
+          if (typeof rawText !== 'string') throw new Error('Invalid content');
+          
+          const parsed = JSON.parse(rawText);
+          
+          if (!parsed || (typeof parsed !== 'object')) {
+            throw new Error('Invalid JSON structure');
+          }
+          
+          const importedEntries = Array.isArray(parsed.entries) ? parsed.entries : null;
+          const importedCities = Array.isArray(parsed.cities) ? parsed.cities : null;
+          const importedOverrides = (parsed.prevOverrides && typeof parsed.prevOverrides === 'object') ? parsed.prevOverrides : {};
+          
+          if (!importedEntries && !importedCities) {
+            throw new Error('Required fields missing');
+          }
+          
+          if (importedEntries) {
+            saveEntriesToStorage(importedEntries);
+            setEntries(importedEntries);
+          }
+          
+          if (importedCities) {
+            saveCitiesToStorage(importedCities);
+            setCities(importedCities);
+          }
+          
+          localStorage.setItem('musa_traders_prev_overrides_v2', JSON.stringify(importedOverrides));
+          setPrevOverrides(importedOverrides);
+          
+          showToast(t.importSuccess, 'success');
+          resolve(true);
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+          
+        } catch (err) {
+          console.error(err);
+          showToast(t.importError, 'info');
+          resolve(false);
+        }
+      };
+      reader.onerror = () => {
+        showToast(t.importError, 'info');
+        resolve(false);
+      };
+      reader.readAsText(file);
+    });
   };
 
   // Helper for displaying notifications
@@ -114,13 +207,15 @@ export default function App() {
   };
 
   const updatePrevAmountOverride = (type: 'sale' | 'received' | 'payment', value: number) => {
-    setPrevOverrides(prev => ({
-      ...prev,
+    const updated = {
+      ...prevOverrides,
       [selectedDate]: {
-        ...prev[selectedDate],
+        ...prevOverrides[selectedDate],
         [type]: value
       }
-    }));
+    };
+    setPrevOverrides(updated);
+    localStorage.setItem('musa_traders_prev_overrides_v2', JSON.stringify(updated));
   };
 
   // Actions: Add Entry
@@ -469,6 +564,8 @@ export default function App() {
                   cities={cities}
                   onAddCity={handleAddCity}
                   onDeleteCity={handleDeleteCity}
+                  onExportBackup={handleExportBackup}
+                  onImportBackup={handleImportBackup}
                   t={t}
                 />
               )}

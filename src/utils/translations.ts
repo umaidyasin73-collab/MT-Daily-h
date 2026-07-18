@@ -55,6 +55,12 @@ export const translations: Record<'en' | 'ur', TranslationSet> = {
     toastDeleted: "Record successfully deleted!",
     toastCityAdded: "City added to registry!",
     toastCityDeleted: "City removed from registry!",
+    backupTitle: "Backup & Restore Data",
+    backupSubtitle: "Export or import your complete sales and branch records as a JSON file.",
+    exportBtn: "Export Backup (JSON)",
+    importBtn: "Import Backup (JSON)",
+    importSuccess: "Backup imported successfully! Page will refresh to load the data.",
+    importError: "Failed to import. Invalid backup file format.",
   },
   ur: {
     title: "موسیٰ ٹریڈرز",
@@ -110,5 +116,11 @@ export const translations: Record<'en' | 'ur', TranslationSet> = {
     toastDeleted: "ریکارڈ حذف کر دیا گیا!",
     toastCityAdded: "شہر فہرست میں شامل کر دیا گیا!",
     toastCityDeleted: "شہر فہرست سے حذف کر دیا گیا!",
+    backupTitle: "بیک اپ اور ری اسٹور ڈیٹا",
+    backupSubtitle: "اپنے سیلز اور برانچوں کا مکمل ریکارڈ JSON فائل میں ایکسپورٹ یا امپورٹ کریں۔",
+    exportBtn: "بیک اپ ایکسپورٹ کریں (JSON)",
+    importBtn: "بیک اپ امپورٹ کریں (JSON)",
+    importSuccess: "بیک اپ کامیابی سے امپورٹ ہو گیا۔ ڈیٹا لوڈ کرنے کے لیے پیج ریفریش ہو جائے گا۔",
+    importError: "امپورٹ کرنے میں ناکامی۔ غلط بیک اپ فائل فارمیٹ۔",
   }
 };

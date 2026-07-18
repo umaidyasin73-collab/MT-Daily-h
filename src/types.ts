@@ -64,4 +64,10 @@ export interface TranslationSet {
   toastDeleted: string;
   toastCityAdded: string;
   toastCityDeleted: string;
+  backupTitle: string;
+  backupSubtitle: string;
+  exportBtn: string;
+  importBtn: string;
+  importSuccess: string;
+  importError: string;
 }
