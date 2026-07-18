@@ -51,8 +51,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sale' | 'received' | 'payment' | 'summary' | 'cities'>('dashboard');
   
   // Visual Theme States
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('musa_traders_lang');
+    return (saved === 'en' || saved === 'ur' ? saved : 'en') as Language;
+  });
   const [bgStyle, setBgStyle] = useState<BackgroundStyle>('aurora');
+
+  // Persist language state
+  useEffect(() => {
+    localStorage.setItem('musa_traders_lang', language);
+  }, [language]);
   
   // Interactive toast alert system
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
@@ -277,7 +285,12 @@ export default function App() {
   const monthPaymentTotal = getMonthTotal('payment');
 
   return (
-    <main className="relative min-h-screen w-full bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden p-3 md:p-6 lg:p-8 flex flex-col items-center">
+    <main
+      dir={language === 'ur' ? 'rtl' : 'ltr'}
+      className={`relative min-h-screen w-full bg-slate-50 text-slate-800 antialiased overflow-x-hidden p-3 md:p-6 lg:p-8 flex flex-col items-center transition-all duration-300 ${
+        language === 'ur' ? 'font-urdu' : 'font-sans'
+      }`}
+    >
       {/* Dynamic Animated Layer */}
       <BackgroundCanvas style={bgStyle} />
 
@@ -334,15 +347,46 @@ export default function App() {
             </div>
 
             {/* Language Selector */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1 text-xs">
-              <Globe className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="font-semibold text-slate-500">{t.languageSelect}:</span>
-              <button
-                onClick={() => setLanguage(l => (l === 'en' ? 'ur' : 'en'))}
-                className="font-bold text-[#010066] hover:underline cursor-pointer"
-              >
-                {language === 'en' ? 'اردو' : 'English'}
-              </button>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl p-1 text-xs">
+              <Globe className="w-3.5 h-3.5 text-indigo-600 ml-1.5 mr-1" />
+              <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-0.5 relative">
+                <button
+                  type="button"
+                  onClick={() => setLanguage('en')}
+                  className={`relative px-2.5 py-1 text-[11px] font-black tracking-wide rounded-md transition-colors select-none cursor-pointer overflow-hidden ${
+                    language === 'en'
+                      ? 'text-[#010066] font-black'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {language === 'en' && (
+                    <motion.div
+                      layoutId="activeLanguagePill"
+                      className="absolute inset-0 bg-white shadow-sm rounded-md -z-10 border border-slate-200/40"
+                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                    />
+                  )}
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage('ur')}
+                  className={`relative px-3 py-1 text-[11px] font-black rounded-md transition-colors select-none cursor-pointer overflow-hidden ${
+                    language === 'ur'
+                      ? 'text-[#010066] font-black'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {language === 'ur' && (
+                    <motion.div
+                      layoutId="activeLanguagePill"
+                      className="absolute inset-0 bg-white shadow-sm rounded-md -z-10 border border-slate-200/40"
+                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                    />
+                  )}
+                  اردو
+                </button>
+              </div>
             </div>
           </div>
         </div>
