@@ -62,7 +62,11 @@ export default function SummaryPage({
           backgroundColor: '#ffffff',
           scale: 2.5, // High resolution
           useCORS: true,
+          allowTaint: true,
           logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          imageTimeout: 0,
         });
 
         const link = document.createElement('a');
