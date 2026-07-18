@@ -12,7 +12,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Building
+  Building,
+  LayoutDashboard,
+  Coins,
+  CreditCard,
+  ClipboardList,
+  MapPin
 } from 'lucide-react';
 
 import MusaLogo from './components/MusaLogo';
@@ -440,71 +445,119 @@ export default function App() {
         </div>
 
         {/* Section Tabs Navigation */}
-        <div className="flex flex-wrap border-b border-slate-200/80 gap-1.5">
+        <div className="flex flex-wrap items-center bg-slate-100/60 dark:bg-slate-900/40 p-1.5 rounded-2xl gap-1.5 border border-slate-200/60 dark:border-slate-800/80 shadow-sm" id="main-tab-navigation">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'dashboard'
-                ? 'border-[#010066] text-[#010066] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabDashboard}
+            {activeTab === 'dashboard' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-[#010066] to-[#12118a] rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <LayoutDashboard className={`w-4 h-4 transition-transform ${activeTab === 'dashboard' ? 'scale-110 text-white animate-pulse' : 'text-slate-400'}`} />
+            <span>{t.tabDashboard}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('sale')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'sale'
-                ? 'border-[#010066] text-[#010066] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabSale}
+            {activeTab === 'sale' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-[#010066] to-[#1a19a3] rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <Building className={`w-4 h-4 transition-transform ${activeTab === 'sale' ? 'scale-110 text-white' : 'text-slate-400'}`} />
+            <span>{t.tabSale}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('received')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'received'
-                ? 'border-[#1A1A7A] text-[#1A1A7A] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabReceived}
+            {activeTab === 'received' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <Coins className={`w-4 h-4 transition-transform ${activeTab === 'received' ? 'scale-110 text-white' : 'text-slate-400'}`} />
+            <span>{t.tabReceived}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('payment')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'payment'
-                ? 'border-[#33339a] text-[#33339a] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabPayment}
+            {activeTab === 'payment' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-rose-600 to-pink-500 rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <CreditCard className={`w-4 h-4 transition-transform ${activeTab === 'payment' ? 'scale-110 text-white' : 'text-slate-400'}`} />
+            <span>{t.tabPayment}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('summary')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'summary'
-                ? 'border-[#010066] text-[#010066] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabSummary}
+            {activeTab === 'summary' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-[#010066] to-[#33339a] rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <ClipboardList className={`w-4 h-4 transition-transform ${activeTab === 'summary' ? 'scale-110 text-white' : 'text-slate-400'}`} />
+            <span>{t.tabSummary}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('cities')}
-            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ml-auto cursor-pointer ${
+            className={`relative px-4.5 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all sm:ml-auto cursor-pointer flex items-center gap-2 select-none overflow-hidden ${
               activeTab === 'cities'
-                ? 'border-[#010066] text-[#010066] bg-indigo-50/20 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 dark:hover:bg-slate-800/30'
             }`}
           >
-            {t.tabManageCities}
+            {activeTab === 'cities' && (
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl shadow-md -z-10"
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              />
+            )}
+            <MapPin className={`w-4 h-4 transition-transform ${activeTab === 'cities' ? 'scale-110 text-white' : 'text-slate-400'}`} />
+            <span>{t.tabManageCities}</span>
           </button>
         </div>
 

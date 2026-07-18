@@ -411,25 +411,34 @@ export default function SectionEntries({
                   </td>
                 </tr>
               ) : (
-                filteredTodayEntries.map((e, idx) => (
-                  <tr key={e.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
-                    <td className="py-3.5 px-4 font-bold font-mono text-slate-400">{idx + 1}</td>
-                    <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{e.name}</td>
-                    <td className="py-3.5 px-4 text-right font-bold font-mono text-slate-800 dark:text-slate-200">
-                      {formatRs(e.amount)}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onDeleteEntry(e.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                <AnimatePresence initial={false}>
+                  {filteredTodayEntries.map((e, idx) => (
+                    <motion.tr
+                      key={e.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -15, transition: { duration: 0.15 } }}
+                      transition={{ type: "spring", stiffness: 350, damping: 30, delay: Math.min(idx * 0.02, 0.15) }}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group"
+                    >
+                      <td className="py-3.5 px-4 font-bold font-mono text-slate-400">{idx + 1}</td>
+                      <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{e.name}</td>
+                      <td className="py-3.5 px-4 text-right font-bold font-mono text-slate-800 dark:text-slate-200">
+                        {formatRs(e.amount)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => onDeleteEntry(e.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Delete entry"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
               )}
             </tbody>
           </table>
@@ -495,8 +504,14 @@ export default function SectionEntries({
                   </td>
                 </tr>
               ) : (
-                runningHistory.map(row => (
-                  <tr key={row.date} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                runningHistory.map((row, idx) => (
+                  <motion.tr
+                    key={row.date}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: Math.min(idx * 0.02, 0.15) }}
+                    className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10"
+                  >
                     <td className="py-2.5 px-4 font-bold text-slate-600 dark:text-slate-400">
                       {formatDateDisplay(row.date)}
                     </td>
@@ -509,7 +524,7 @@ export default function SectionEntries({
                     <td className="py-2.5 px-4 text-right font-bold text-indigo-600 dark:text-indigo-400">
                       {formatRs(row.grand)}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>
