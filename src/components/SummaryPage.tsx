@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Camera, Calendar, CheckCircle2, TrendingUp, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import MusaLogo from './MusaLogo';
 
@@ -77,7 +77,7 @@ export default function SummaryPage({
         
         document.body.appendChild(clone);
 
-        const canvas = await html2canvas(clone, {
+        const canvas = await captureWithSafeStylesheets(clone, {
           backgroundColor: '#ffffff',
           scale: 2.5, // High resolution crisp export
           useCORS: true,

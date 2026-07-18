@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import Autocomplete from './Autocomplete';
 
@@ -113,7 +113,7 @@ export default function SectionEntries({
         
         document.body.appendChild(clone);
 
-        const canvas = await html2canvas(clone, {
+        const canvas = await captureWithSafeStylesheets(clone, {
           backgroundColor: '#ffffff',
           scale: 2,
           useCORS: true,
