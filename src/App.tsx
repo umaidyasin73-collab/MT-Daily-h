@@ -20,6 +20,7 @@ import BackgroundCanvas from './components/BackgroundCanvas';
 import SectionEntries from './components/SectionEntries';
 import SummaryPage from './components/SummaryPage';
 import ManageCities from './components/ManageCities';
+import DashboardView from './components/DashboardView';
 
 import { translations } from './utils/translations';
 import {
@@ -42,7 +43,7 @@ export default function App() {
   const [prevOverrides, setPrevOverrides] = useState<Record<string, { sale?: number; received?: number; payment?: number }>>({});
   
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'sale' | 'received' | 'payment' | 'summary' | 'cities'>('sale');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'sale' | 'received' | 'payment' | 'summary' | 'cities'>('dashboard');
   
   // Visual Theme States
   const [language, setLanguage] = useState<Language>('en');
@@ -76,7 +77,8 @@ export default function App() {
         activeEl.hasAttribute('contenteditable')
       );
 
-      const TABS: ('sale' | 'received' | 'payment' | 'summary' | 'cities')[] = [
+      const TABS: ('dashboard' | 'sale' | 'received' | 'payment' | 'summary' | 'cities')[] = [
+        'dashboard',
         'sale',
         'received',
         'payment',
@@ -84,25 +86,29 @@ export default function App() {
         'cities'
       ];
 
-      // Handle Alt + Number (1-5) switches tabs even when typing
+      // Handle Alt + Number (1-6) switches tabs even when typing
       if (e.altKey) {
         if (e.key === '1') {
           e.preventDefault();
-          setActiveTab('sale');
+          setActiveTab('dashboard');
           return;
         } else if (e.key === '2') {
           e.preventDefault();
-          setActiveTab('received');
+          setActiveTab('sale');
           return;
         } else if (e.key === '3') {
           e.preventDefault();
-          setActiveTab('payment');
+          setActiveTab('received');
           return;
         } else if (e.key === '4') {
           e.preventDefault();
-          setActiveTab('summary');
+          setActiveTab('payment');
           return;
         } else if (e.key === '5') {
+          e.preventDefault();
+          setActiveTab('summary');
+          return;
+        } else if (e.key === '6') {
           e.preventDefault();
           setActiveTab('cities');
           return;
@@ -129,14 +135,16 @@ export default function App() {
           return TABS[nextIdx];
         });
       } else if (e.key === '1') {
-        setActiveTab('sale');
+        setActiveTab('dashboard');
       } else if (e.key === '2') {
-        setActiveTab('received');
+        setActiveTab('sale');
       } else if (e.key === '3') {
-        setActiveTab('payment');
+        setActiveTab('received');
       } else if (e.key === '4') {
-        setActiveTab('summary');
+        setActiveTab('payment');
       } else if (e.key === '5') {
+        setActiveTab('summary');
+      } else if (e.key === '6') {
         setActiveTab('cities');
       }
     };
@@ -523,6 +531,17 @@ export default function App() {
         {/* Section Tabs Navigation */}
         <div className="flex flex-wrap border-b border-slate-200/80 gap-1.5">
           <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'border-[#010066] text-[#010066] bg-indigo-50/20 font-black'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {t.tabDashboard}
+          </button>
+
+          <button
             onClick={() => setActiveTab('sale')}
             className={`px-4.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
               activeTab === 'sale'
@@ -580,7 +599,7 @@ export default function App() {
 
         {/* Keyboard Shortcut Info */}
         <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-slate-50/80 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/60 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 select-none shadow-sm" data-html2canvas-ignore="true">
-          <span className="inline-block px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded font-bold font-mono text-[9px] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700/60">Alt + 1-5</span>
+          <span className="inline-block px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded font-bold font-mono text-[9px] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700/60">Alt + 1-6</span>
           <span className="text-slate-300 dark:text-slate-700">|</span>
           <span className="inline-block px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded font-bold font-mono text-[9px] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700/60">← / →</span>
           <span className="ml-1 text-slate-500 dark:text-slate-400">{t.shortcutHint}</span>
@@ -596,6 +615,15 @@ export default function App() {
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.2 }}
             >
+              {activeTab === 'dashboard' && (
+                <DashboardView
+                  entries={entries}
+                  date={selectedDate}
+                  t={t}
+                  setActiveTab={setActiveTab}
+                />
+              )}
+
               {activeTab === 'sale' && (
                 <SectionEntries
                   type="sale"
