@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle, Search, X, Target, ArrowUpDown, ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle, Search, X, ArrowUpDown, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import Autocomplete from './Autocomplete';
 import MusaLogo from './MusaLogo';
-import { useEffect } from 'react';
 
 interface SectionEntriesProps {
   type: 'sale' | 'received' | 'payment';
@@ -35,27 +34,9 @@ export default function SectionEntries({
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [salesGoal, setSalesGoal] = useState<number>(0);
   const [sortBy, setSortBy] = useState<'time' | 'amount-asc' | 'amount-desc'>('time');
   const captureRef = useRef<HTMLDivElement>(null);
   const watermarks = Array.from({ length: 12 });
-
-  // Sync sales goal state on date change
-  useEffect(() => {
-    if (type === 'sale') {
-      const saved = localStorage.getItem(`musa_traders_sales_goal_v2_${date}`);
-      setSalesGoal(saved ? parseFloat(saved) : 0);
-    }
-  }, [date, type]);
-
-  const handleGoalChange = (val: number) => {
-    setSalesGoal(val);
-    if (val > 0) {
-      localStorage.setItem(`musa_traders_sales_goal_v2_${date}`, String(val));
-    } else {
-      localStorage.removeItem(`musa_traders_sales_goal_v2_${date}`);
-    }
-  };
 
   // Filter entries for today's selected date
   const todayEntries = entries.filter(e => e.date === date && e.type === type);
@@ -278,99 +259,6 @@ export default function SectionEntries({
           </p>
         </motion.div>
       </div>
-
-      {/* Daily Sales Goal Target Tracker Card */}
-      {type === 'sale' && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
-        >
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                <Target className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                  {t.salesGoalTitle}
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {salesGoal > 0 ? (
-                    <>
-                      {t.salesGoalStatus}{" "}
-                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                        {Math.min(100, Math.round((todayTotal / salesGoal) * 100))}%
-                      </span>
-                    </>
-                  ) : (
-                    t.salesGoalPlaceholder
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress Bar & Details */}
-            {salesGoal > 0 && (
-              <div className="flex flex-col gap-2">
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3.5 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, (todayTotal / salesGoal) * 100)}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={`h-full rounded-full ${
-                      todayTotal >= salesGoal
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                        : 'bg-gradient-to-r from-indigo-500 to-indigo-600'
-                    }`}
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
-                    {formatRs(todayTotal)} / <span className="text-slate-400 dark:text-slate-500">{formatRs(salesGoal)}</span>
-                  </span>
-                  <span className="font-semibold">
-                    {todayTotal >= salesGoal ? (
-                      <span className="text-emerald-600 dark:text-emerald-400">{t.salesGoalAchieved}</span>
-                    ) : (
-                      <span className="text-slate-500 dark:text-slate-400">
-                        {t.salesGoalRemaining.replace('{amount}', (salesGoal - todayTotal).toLocaleString())}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <label className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase">
-              {t.salesGoalTitle}
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                step="5000"
-                value={salesGoal === 0 ? '' : salesGoal}
-                onChange={e => handleGoalChange(parseFloat(e.target.value) || 0)}
-                placeholder={t.amountPlaceholder}
-                className="w-full sm:w-56 pl-3.5 pr-8 py-2 text-sm font-mono font-bold bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
-              />
-              {salesGoal > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleGoalChange(0)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Screen capture image row */}
       <div className="flex justify-end">

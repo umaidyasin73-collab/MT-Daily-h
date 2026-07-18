@@ -66,95 +66,6 @@ export default function App() {
     }
   }, []);
 
-  // Setup keyboard shortcuts for tab navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeEl = document.activeElement;
-      const isTyping = activeEl && (
-        activeEl.tagName === 'INPUT' ||
-        activeEl.tagName === 'TEXTAREA' ||
-        activeEl.tagName === 'SELECT' ||
-        activeEl.hasAttribute('contenteditable')
-      );
-
-      const TABS: ('dashboard' | 'sale' | 'received' | 'payment' | 'summary' | 'cities')[] = [
-        'dashboard',
-        'sale',
-        'received',
-        'payment',
-        'summary',
-        'cities'
-      ];
-
-      // Handle Alt + Number (1-6) switches tabs even when typing
-      if (e.altKey) {
-        if (e.key === '1') {
-          e.preventDefault();
-          setActiveTab('dashboard');
-          return;
-        } else if (e.key === '2') {
-          e.preventDefault();
-          setActiveTab('sale');
-          return;
-        } else if (e.key === '3') {
-          e.preventDefault();
-          setActiveTab('received');
-          return;
-        } else if (e.key === '4') {
-          e.preventDefault();
-          setActiveTab('payment');
-          return;
-        } else if (e.key === '5') {
-          e.preventDefault();
-          setActiveTab('summary');
-          return;
-        } else if (e.key === '6') {
-          e.preventDefault();
-          setActiveTab('cities');
-          return;
-        }
-      }
-
-      if (isTyping) {
-        return;
-      }
-
-      // Arrow keys navigation when NOT typing
-      if (e.key === 'ArrowRight' || e.key === 'Right') {
-        e.preventDefault();
-        setActiveTab(prev => {
-          const currIdx = TABS.indexOf(prev);
-          const nextIdx = (currIdx + 1) % TABS.length;
-          return TABS[nextIdx];
-        });
-      } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
-        e.preventDefault();
-        setActiveTab(prev => {
-          const currIdx = TABS.indexOf(prev);
-          const nextIdx = (currIdx - 1 + TABS.length) % TABS.length;
-          return TABS[nextIdx];
-        });
-      } else if (e.key === '1') {
-        setActiveTab('dashboard');
-      } else if (e.key === '2') {
-        setActiveTab('sale');
-      } else if (e.key === '3') {
-        setActiveTab('received');
-      } else if (e.key === '4') {
-        setActiveTab('payment');
-      } else if (e.key === '5') {
-        setActiveTab('summary');
-      } else if (e.key === '6') {
-        setActiveTab('cities');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
   // Save changes to storage whenever state updates
   const handleUpdateEntries = (updated: Entry[]) => {
     setEntries(updated);
@@ -595,14 +506,6 @@ export default function App() {
           >
             {t.tabManageCities}
           </button>
-        </div>
-
-        {/* Keyboard Shortcut Info */}
-        <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-slate-50/80 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/60 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 select-none shadow-sm" data-html2canvas-ignore="true">
-          <span className="inline-block px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded font-bold font-mono text-[9px] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700/60">Alt + 1-6</span>
-          <span className="text-slate-300 dark:text-slate-700">|</span>
-          <span className="inline-block px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded font-bold font-mono text-[9px] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700/60">← / →</span>
-          <span className="ml-1 text-slate-500 dark:text-slate-400">{t.shortcutHint}</span>
         </div>
 
         {/* Tab Content Staggered Animations Container */}
