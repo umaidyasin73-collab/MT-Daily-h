@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle } from 'lucide-react';
+import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle, Search, X, Target, ArrowUpDown, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import Autocomplete from './Autocomplete';
 import MusaLogo from './MusaLogo';
+import { useEffect } from 'react';
 
 interface SectionEntriesProps {
   type: 'sale' | 'received' | 'payment';
@@ -33,13 +34,50 @@ export default function SectionEntries({
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [salesGoal, setSalesGoal] = useState<number>(0);
+  const [sortBy, setSortBy] = useState<'time' | 'amount-asc' | 'amount-desc'>('time');
   const captureRef = useRef<HTMLDivElement>(null);
   const watermarks = Array.from({ length: 12 });
+
+  // Sync sales goal state on date change
+  useEffect(() => {
+    if (type === 'sale') {
+      const saved = localStorage.getItem(`musa_traders_sales_goal_v2_${date}`);
+      setSalesGoal(saved ? parseFloat(saved) : 0);
+    }
+  }, [date, type]);
+
+  const handleGoalChange = (val: number) => {
+    setSalesGoal(val);
+    if (val > 0) {
+      localStorage.setItem(`musa_traders_sales_goal_v2_${date}`, String(val));
+    } else {
+      localStorage.removeItem(`musa_traders_sales_goal_v2_${date}`);
+    }
+  };
 
   // Filter entries for today's selected date
   const todayEntries = entries.filter(e => e.date === date && e.type === type);
   const todayTotal = todayEntries.reduce((sum, e) => sum + e.amount, 0);
   const grandTotal = todayTotal + prevAmount;
+
+  // Filter and Sort entries based on real-time search query & sort setting
+  const filteredTodayEntries = [...todayEntries]
+    .filter(e => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return e.name.toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (sortBy === 'amount-asc') {
+        return a.amount - b.amount;
+      }
+      if (sortBy === 'amount-desc') {
+        return b.amount - a.amount;
+      }
+      return 0;
+    });
 
   // Handle addition
   const handleAdd = (e: React.FormEvent) => {
@@ -241,6 +279,99 @@ export default function SectionEntries({
         </motion.div>
       </div>
 
+      {/* Daily Sales Goal Target Tracker Card */}
+      {type === 'sale' && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
+        >
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                <Target className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                  {t.salesGoalTitle}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {salesGoal > 0 ? (
+                    <>
+                      {t.salesGoalStatus}{" "}
+                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        {Math.min(100, Math.round((todayTotal / salesGoal) * 100))}%
+                      </span>
+                    </>
+                  ) : (
+                    t.salesGoalPlaceholder
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar & Details */}
+            {salesGoal > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3.5 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, (todayTotal / salesGoal) * 100)}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className={`h-full rounded-full ${
+                      todayTotal >= salesGoal
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                        : 'bg-gradient-to-r from-indigo-500 to-indigo-600'
+                    }`}
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                    {formatRs(todayTotal)} / <span className="text-slate-400 dark:text-slate-500">{formatRs(salesGoal)}</span>
+                  </span>
+                  <span className="font-semibold">
+                    {todayTotal >= salesGoal ? (
+                      <span className="text-emerald-600 dark:text-emerald-400">{t.salesGoalAchieved}</span>
+                    ) : (
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t.salesGoalRemaining.replace('{amount}', (salesGoal - todayTotal).toLocaleString())}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <label className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase">
+              {t.salesGoalTitle}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                step="5000"
+                value={salesGoal === 0 ? '' : salesGoal}
+                onChange={e => handleGoalChange(parseFloat(e.target.value) || 0)}
+                placeholder={t.amountPlaceholder}
+                className="w-full sm:w-56 pl-3.5 pr-8 py-2 text-sm font-mono font-bold bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+              />
+              {salesGoal > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleGoalChange(0)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Screen capture image row */}
       <div className="flex justify-end">
         <motion.button
@@ -298,26 +429,101 @@ export default function SectionEntries({
           </div>
         </div>
 
+        {/* Search and Sort Filter Bar */}
+        <div className="relative z-10 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center" data-html2canvas-ignore="true">
+          <div className="relative flex-1 flex items-center">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.searchPlaceholder}
+              aria-label={t.searchLabel}
+              className="w-full pl-9 pr-10 py-2.5 sm:py-2 text-sm bg-slate-50 hover:bg-slate-100/70 focus:bg-white dark:bg-slate-950/40 dark:hover:bg-slate-950/60 dark:focus:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-950 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                title="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="sort-entries" className="text-xs font-bold text-slate-400 dark:text-slate-500 shrink-0 select-none">
+              {t.sortByLabel}
+            </label>
+            <select
+              id="sort-entries"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-2 text-xs font-bold bg-slate-50 hover:bg-slate-100/70 dark:bg-slate-950/40 dark:hover:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent cursor-pointer transition-all shadow-sm"
+            >
+              <option value="time">{t.sortTime}</option>
+              <option value="amount-desc">{t.sortAmountDesc}</option>
+              <option value="amount-asc">{t.sortAmountAsc}</option>
+            </select>
+          </div>
+        </div>
+
         {/* Table of today's records */}
         <div className="overflow-x-auto relative z-10">
           <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase tracking-widest text-[10px] font-black">
-                <th className="py-3 px-4 w-16">{t.tableSNo}</th>
+              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase tracking-widest text-[10px] font-black select-none">
+                <th 
+                  onClick={() => setSortBy('time')}
+                  className="py-3 px-4 w-20 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group/header"
+                  title="Sort by entry time"
+                >
+                  <span className="flex items-center gap-1">
+                    {t.tableSNo}
+                    {sortBy === 'time' ? (
+                      <Clock className="w-3 h-3 text-indigo-500" />
+                    ) : (
+                      <Clock className="w-3 h-3 text-slate-300 dark:text-slate-700 opacity-0 group-hover/header:opacity-100 transition-opacity" />
+                    )}
+                  </span>
+                </th>
                 <th className="py-3 px-4">{formLabels.field}</th>
-                <th className="py-3 px-4 text-right w-48">{t.tableAmount}</th>
+                <th 
+                  onClick={() => {
+                    if (sortBy === 'amount-desc') {
+                      setSortBy('amount-asc');
+                    } else if (sortBy === 'amount-asc') {
+                      setSortBy('time');
+                    } else {
+                      setSortBy('amount-desc');
+                    }
+                  }}
+                  className="py-3 px-4 text-right w-48 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group/header"
+                  title="Toggle amount sorting"
+                >
+                  <span className="flex items-center justify-end gap-1">
+                    {t.tableAmount}
+                    {sortBy === 'amount-desc' && <ArrowDown className="w-3.5 h-3.5 text-[#010066] dark:text-indigo-400" />}
+                    {sortBy === 'amount-asc' && <ArrowUp className="w-3.5 h-3.5 text-[#010066] dark:text-indigo-400" />}
+                    {sortBy === 'time' && <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 opacity-60 group-hover/header:opacity-100 transition-opacity" />}
+                  </span>
+                </th>
                 <th className="py-3 px-4 text-center w-24"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
-              {todayEntries.length === 0 ? (
+              {filteredTodayEntries.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center text-slate-400 font-medium italic">
-                    {t.tableEmpty}
+                    {searchQuery ? (t.tabSummary.includes('خلاصہ') ? "کوئی مماثل اندراج نہیں ملا۔" : "No matching entries found.") : t.tableEmpty}
                   </td>
                 </tr>
               ) : (
-                todayEntries.map((e, idx) => (
+                filteredTodayEntries.map((e, idx) => (
                   <tr key={e.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
                     <td className="py-3.5 px-4 font-bold font-mono text-slate-400">{idx + 1}</td>
                     <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{e.name}</td>

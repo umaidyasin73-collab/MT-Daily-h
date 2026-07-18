@@ -1,9 +1,19 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Camera, Calendar, CheckCircle2, TrendingUp, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Camera, Calendar, CheckCircle2, TrendingUp, ArrowDownCircle, ArrowUpCircle, BarChart3, LineChart, PieChart } from 'lucide-react';
 import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import MusaLogo from './MusaLogo';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 interface SummaryPageProps {
   date: string;
@@ -24,6 +34,84 @@ export default function SummaryPage({
 }: SummaryPageProps) {
   const summaryRef = useRef<HTMLDivElement>(null);
   const [capturing, setCapturing] = useState(false);
+
+  // Selected Month calculations for the chart
+  const [yearStr, monthStr] = date ? date.split('-') : ['', ''];
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const selectedMonthKey = (yearStr && monthStr) ? `${yearStr}-${monthStr}` : '';
+
+  // Calculate days in the selected month
+  const daysInMonth = (year && month) ? new Date(year, month, 0).getDate() : 30;
+
+  // Filter entries for the selected month
+  const monthlyEntries = selectedMonthKey 
+    ? entries.filter(e => e.date.startsWith(selectedMonthKey))
+    : [];
+
+  const monthlySalesTotal = monthlyEntries.filter(e => e.type === 'sale').reduce((sum, e) => sum + e.amount, 0);
+  const monthlyReceivedTotal = monthlyEntries.filter(e => e.type === 'received').reduce((sum, e) => sum + e.amount, 0);
+  const monthlyPaymentsTotal = monthlyEntries.filter(e => e.type === 'payment').reduce((sum, e) => sum + e.amount, 0);
+
+  // Format month name for display
+  const formatMonthDisplay = (d: string) => {
+    const dt = new Date(d + 'T00:00:00');
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  };
+
+  // Generate chart data for each day of the month
+  const chartData = selectedMonthKey ? Array.from({ length: daysInMonth }, (_, i) => {
+    const day = i + 1;
+    const dayStr = String(day).padStart(2, '0');
+    const fullDate = `${selectedMonthKey}-${dayStr}`;
+
+    const dayEntries = monthlyEntries.filter(e => e.date === fullDate);
+    const sales = dayEntries.filter(e => e.type === 'sale').reduce((sum, e) => sum + e.amount, 0);
+    const received = dayEntries.filter(e => e.type === 'received').reduce((sum, e) => sum + e.amount, 0);
+    const payments = dayEntries.filter(e => e.type === 'payment').reduce((sum, e) => sum + e.amount, 0);
+
+    return {
+      day: String(day),
+      [t.chartSales]: sales,
+      [t.chartReceived]: received,
+      [t.chartPayments]: payments,
+    };
+  }) : [];
+
+  // Y-Axis Formatter for PKR Lakhs / Thousands
+  const formatYAxis = (value: number) => {
+    if (value >= 10000000) return `${(value / 10000000).toFixed(1)}Cr`;
+    if (value >= 100000) return `${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+    return String(value);
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-lg font-sans">
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 mb-1.5 text-xs border-b border-slate-100 dark:border-slate-800 pb-1">
+            {t.chartDay}: {label}
+          </p>
+          <div className="flex flex-col gap-1.5 text-xs">
+            {payload.map((p: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between gap-6">
+                <span className="flex items-center gap-1.5 font-bold" style={{ color: p.color }}>
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                  {p.name}:
+                </span>
+                <span className="font-mono font-black text-slate-900 dark:text-slate-100">
+                  Rs {p.value.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Format currency
   const formatRs = (n: number) => {
@@ -360,6 +448,103 @@ export default function SummaryPage({
           </span>
         </div>
       </div>
+
+      {/* Monthly Financial Chart Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl max-w-4xl mx-auto w-full mt-2 flex flex-col gap-6"
+        id="monthly-chart-card"
+        data-html2canvas-ignore="true"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+              <BarChart3 className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 leading-snug">
+                {t.chartTitle} ({formatMonthDisplay(date)})
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5 leading-normal">
+                {t.chartSubtitle}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mini Month-to-Date Stats Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl border border-amber-100 dark:border-amber-950/30 bg-amber-50/30 dark:bg-amber-950/10 flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              {t.tabSale} - MTD
+            </span>
+            <span className="text-lg font-black font-mono text-amber-950 dark:text-amber-200 mt-1">
+              {formatRs(monthlySalesTotal)}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-emerald-100 dark:border-emerald-950/30 bg-emerald-50/30 dark:bg-emerald-950/10 flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              {t.tabReceived} - MTD
+            </span>
+            <span className="text-lg font-black font-mono text-emerald-950 dark:text-emerald-200 mt-1">
+              {formatRs(monthlyReceivedTotal)}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-rose-100 dark:border-rose-950/30 bg-rose-50/30 dark:bg-rose-950/10 flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              {t.tabPayment} - MTD
+            </span>
+            <span className="text-lg font-black font-mono text-rose-950 dark:text-rose-200 mt-1">
+              {formatRs(monthlyPaymentsTotal)}
+            </span>
+          </div>
+        </div>
+
+        {/* Recharts Bar Chart */}
+        <div className="w-full h-[350px] font-mono mt-2" id="recharts-wrapper">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 10, right: 5, left: -25, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:stroke-slate-800/40" />
+              <XAxis 
+                dataKey="day" 
+                tickLine={false}
+                axisLine={false}
+                stroke="#64748b"
+                fontSize={10}
+                dy={8}
+              />
+              <YAxis 
+                tickFormatter={formatYAxis}
+                tickLine={false}
+                axisLine={false}
+                stroke="#64748b"
+                fontSize={10}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
+              <Legend 
+                verticalAlign="top" 
+                height={36} 
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: '11px', fontFamily: 'sans-serif', fontWeight: 'bold' }}
+              />
+              <Bar dataKey={t.chartSales} fill="#FFCB05" radius={[4, 4, 0, 0]} maxBarSize={12} />
+              <Bar dataKey={t.chartReceived} fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={12} />
+              <Bar dataKey={t.chartPayments} fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={12} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -70,4 +70,22 @@ export interface TranslationSet {
   importBtn: string;
   importSuccess: string;
   importError: string;
+  searchLabel: string;
+  searchPlaceholder: string;
+  shortcutHint: string;
+  chartTitle: string;
+  chartSubtitle: string;
+  chartSales: string;
+  chartReceived: string;
+  chartPayments: string;
+  chartDay: string;
+  salesGoalTitle: string;
+  salesGoalPlaceholder: string;
+  salesGoalStatus: string;
+  salesGoalRemaining: string;
+  salesGoalAchieved: string;
+  sortByLabel: string;
+  sortTime: string;
+  sortAmountDesc: string;
+  sortAmountAsc: string;
 }
