@@ -4,6 +4,7 @@ import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle } fr
 import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import Autocomplete from './Autocomplete';
+import MusaLogo from './MusaLogo';
 
 interface SectionEntriesProps {
   type: 'sale' | 'received' | 'payment';
@@ -33,6 +34,7 @@ export default function SectionEntries({
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
+  const watermarks = Array.from({ length: 12 });
 
   // Filter entries for today's selected date
   const todayEntries = entries.filter(e => e.date === date && e.type === type);
@@ -117,7 +119,7 @@ export default function SectionEntries({
           backgroundColor: '#ffffff',
           scale: 2,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           logging: false,
           scrollX: 0,
           scrollY: 0,
@@ -274,10 +276,48 @@ export default function SectionEntries({
       {/* Capture wrapper for image export */}
       <div
         ref={captureRef}
-        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col gap-6"
+        className="relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 shadow-md flex flex-col gap-6 overflow-hidden"
       >
+        {/* Tiled Watermark Background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0 opacity-[0.02] dark:opacity-[0.01] grid grid-cols-3 md:grid-cols-6 gap-y-16 gap-x-12 p-8">
+          {watermarks.map((_, i) => (
+            <div key={i} className="flex flex-col items-center justify-center transform -rotate-12">
+              <MusaLogo size={35} />
+              <span className="text-[7px] font-extrabold text-[#010066] tracking-wider mt-1">MUSA TRADERS</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Center Giant Watermark Logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] dark:opacity-[0.015] pointer-events-none select-none z-0 transform -rotate-12">
+          <MusaLogo size={280} />
+        </div>
+
+        {/* Brand Ledger Header */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between border-b-2 border-[#010066] pb-4 mb-2 gap-4">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <MusaLogo size={52} className="filter drop-shadow-sm" />
+            <div>
+              <h2 className="text-xl md:text-2xl font-extrabold text-[#010066] dark:text-indigo-400 font-serif tracking-tight">
+                MUSA TRADERS
+              </h2>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                {type === 'sale' ? t.tabSale : type === 'received' ? t.tabReceived : t.tabPayment} Ledger
+              </p>
+            </div>
+          </div>
+          <div className="bg-[#010066]/5 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-[#010066]/10 dark:border-indigo-500/20 text-right">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+              {t.summaryDate}
+            </span>
+            <span className="text-sm font-bold text-[#010066] dark:text-indigo-300 font-mono">
+              {formatDateDisplay(date)}
+            </span>
+          </div>
+        </div>
+
         {/* Table of today's records */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative z-10">
           <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase tracking-widest text-[10px] font-black">
@@ -320,7 +360,7 @@ export default function SectionEntries({
         </div>
 
         {/* Dynamic Ledger Summary strip */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 dark:border-slate-800 pt-5 relative z-10">
           <div className="p-4 bg-slate-50/50 dark:bg-slate-950/20 rounded-xl border border-slate-100/50 dark:border-slate-800/60">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
               Today's Logging

@@ -81,7 +81,7 @@ export default function SummaryPage({
           backgroundColor: '#ffffff',
           scale: 2.5, // High resolution crisp export
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           logging: false,
           scrollX: 0,
           scrollY: 0,
