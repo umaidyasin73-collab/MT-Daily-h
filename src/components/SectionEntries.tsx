@@ -93,8 +93,27 @@ export default function SectionEntries({
     if (!captureRef.current) return;
     setCapturing(true);
     setTimeout(async () => {
+      let clone: HTMLDivElement | null = null;
       try {
-        const canvas = await html2canvas(captureRef.current!, {
+        const originalEl = captureRef.current!;
+        
+        // Create a perfect clean clone of the document element to avoid viewport/scrolling cuts
+        clone = originalEl.cloneNode(true) as HTMLDivElement;
+        clone.classList.add('classic-colors-only');
+        
+        // Apply inline styles to isolate and render the cloned document perfectly
+        clone.style.position = 'fixed';
+        clone.style.top = '0';
+        clone.style.left = '-9999px'; // Render safely offscreen
+        clone.style.width = originalEl.offsetWidth + 'px';
+        clone.style.height = originalEl.offsetHeight + 'px';
+        clone.style.background = '#ffffff';
+        clone.style.color = '#0f172a';
+        clone.style.zIndex = '-9999';
+        
+        document.body.appendChild(clone);
+
+        const canvas = await html2canvas(clone, {
           backgroundColor: '#ffffff',
           scale: 2,
           useCORS: true,
@@ -102,6 +121,8 @@ export default function SectionEntries({
           logging: false,
           scrollX: 0,
           scrollY: 0,
+          windowWidth: originalEl.offsetWidth,
+          windowHeight: originalEl.offsetHeight,
           imageTimeout: 0,
         });
 
@@ -111,7 +132,11 @@ export default function SectionEntries({
         link.click();
       } catch (err) {
         console.error('Failed to capture:', err);
+        alert('Could not capture image. Please try again.');
       } finally {
+        if (clone && clone.parentNode) {
+          clone.parentNode.removeChild(clone);
+        }
         setCapturing(false);
       }
     }, 150);
