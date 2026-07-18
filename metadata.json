@@ -1,0 +1,6 @@
+{
+  "name": "Musa Traders Sale Portal",
+  "description": "Daily sale, received amounts, payments logging and summary reports generator with high performance ambient animations and export capabilities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
