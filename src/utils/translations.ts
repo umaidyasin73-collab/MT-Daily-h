@@ -93,6 +93,10 @@ export const translations: Record<'en' | 'ur', TranslationSet> = {
     sortTime: "🕒 Order of Entry",
     sortAmountDesc: "💰 Amount: High to Low",
     sortAmountAsc: "💰 Amount: Low to High",
+    editBtn: "Edit",
+    saveBtn: "Save",
+    cancelBtn: "Cancel",
+    updateTitle: "Update",
   },
   ur: {
     title: "موسیٰ ٹریڈرز",
@@ -186,5 +190,9 @@ export const translations: Record<'en' | 'ur', TranslationSet> = {
     sortTime: "🕒 اندراج کی ترتیب",
     sortAmountDesc: "💰 رقم: زیادہ سے کم",
     sortAmountAsc: "💰 رقم: کم سے زیادہ",
+    editBtn: "تبدیل کریں",
+    saveBtn: "محفوظ کریں",
+    cancelBtn: "منسوخ کریں",
+    updateTitle: "اپڈیٹ کریں",
   }
 };

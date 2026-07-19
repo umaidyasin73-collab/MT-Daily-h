@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle, Search, X, ArrowUpDown, ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import { Camera, Trash2, Calendar, FileSpreadsheet, PlusCircle, AlertCircle, Search, X, ArrowUpDown, ArrowUp, ArrowDown, Clock, Pencil, Check } from 'lucide-react';
 import { captureWithSafeStylesheets } from '../lib/captureUtils';
 import { Entry, TranslationSet } from '../types';
 import Autocomplete from './Autocomplete';
@@ -15,6 +15,7 @@ interface SectionEntriesProps {
   onUpdatePrevAmount: (val: number) => void;
   onAddEntry: (name: string, amount: number) => boolean;
   onDeleteEntry: (id: string) => void;
+  onUpdateEntry: (id: string, name: string, amount: number) => void;
   t: TranslationSet;
 }
 
@@ -27,11 +28,64 @@ export default function SectionEntries({
   onUpdatePrevAmount,
   onAddEntry,
   onDeleteEntry,
+  onUpdateEntry,
   t
 }: SectionEntriesProps) {
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
+  const [name, setName] = useState(() => {
+    return localStorage.getItem(`musa_draft_name_${type}`) || '';
+  });
+  const [amount, setAmount] = useState(() => {
+    return localStorage.getItem(`musa_draft_amount_${type}`) || '';
+  });
   const [error, setError] = useState<string | null>(null);
+
+  // Editing mode states
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+
+  const handleStartEdit = (e: Entry) => {
+    setEditingId(e.id);
+    setEditName(e.name);
+    setEditAmount(e.amount.toString());
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+    setEditAmount('');
+  };
+
+  const handleSaveEdit = (id: string) => {
+    const cleanName = editName.trim();
+    const cleanAmount = parseFloat(editAmount);
+    if (!cleanName || isNaN(cleanAmount) || cleanAmount <= 0) {
+      setError(t.errorRequired);
+      return;
+    }
+    onUpdateEntry(id, cleanName, cleanAmount);
+    setEditingId(null);
+    setEditName('');
+    setEditAmount('');
+    setError(null);
+  };
+
+  // Load draft values if type changes
+  useEffect(() => {
+    setName(localStorage.getItem(`musa_draft_name_${type}`) || '');
+    setAmount(localStorage.getItem(`musa_draft_amount_${type}`) || '');
+    setError(null);
+  }, [type]);
+
+  // Sync name to localStorage
+  useEffect(() => {
+    localStorage.setItem(`musa_draft_name_${type}`, name);
+  }, [name, type]);
+
+  // Sync amount to localStorage
+  useEffect(() => {
+    localStorage.setItem(`musa_draft_amount_${type}`, amount);
+  }, [amount, type]);
   const [capturing, setCapturing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'time' | 'amount-asc' | 'amount-desc'>('time');
@@ -412,32 +466,119 @@ export default function SectionEntries({
                 </tr>
               ) : (
                 <AnimatePresence initial={false}>
-                  {filteredTodayEntries.map((e, idx) => (
-                    <motion.tr
-                      key={e.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -15, transition: { duration: 0.15 } }}
-                      transition={{ type: "spring", stiffness: 350, damping: 30, delay: Math.min(idx * 0.02, 0.15) }}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group"
-                    >
-                      <td className="py-3.5 px-4 font-bold font-mono text-slate-400">{idx + 1}</td>
-                      <td className="py-3.5 px-4 text-slate-800 dark:text-slate-200 font-semibold">{e.name}</td>
-                      <td className="py-3.5 px-4 text-right font-bold font-mono text-slate-800 dark:text-slate-200">
-                        {formatRs(e.amount)}
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => onDeleteEntry(e.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          title="Delete entry"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
+                  {filteredTodayEntries.map((e, idx) => {
+                    const isEditing = editingId === e.id;
+                    return (
+                      <motion.tr
+                        key={e.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -15, transition: { duration: 0.15 } }}
+                        transition={{ type: "spring", stiffness: 350, damping: 30, delay: Math.min(idx * 0.02, 0.15) }}
+                        className={`transition-colors group ${
+                          isEditing 
+                            ? 'bg-indigo-50/30 dark:bg-indigo-950/10' 
+                            : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/20'
+                        }`}
+                        onDoubleClick={() => !isEditing && handleStartEdit(e)}
+                      >
+                        <td className="py-3.5 px-4 font-bold font-mono text-slate-400">
+                          {isEditing ? (
+                            <span className="flex items-center justify-center w-5 h-5 rounded bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-black">
+                              ✎
+                            </span>
+                          ) : (
+                            idx + 1
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4">
+                          {isEditing ? (
+                            <div className="max-w-xs">
+                              <Autocomplete
+                                value={editName}
+                                onChange={setEditName}
+                                suggestions={cities}
+                                placeholder={t.tableName}
+                              />
+                            </div>
+                          ) : (
+                            <div 
+                              className="text-slate-800 dark:text-slate-200 font-semibold cursor-pointer select-none"
+                              onClick={() => handleStartEdit(e)}
+                              title="Click to edit"
+                            >
+                              {e.name}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-right">
+                          {isEditing ? (
+                            <div className="flex justify-end">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={editAmount}
+                                onChange={e => setEditAmount(e.target.value)}
+                                className="w-32 px-3 py-1.5 text-right font-bold text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                                placeholder={t.amountPlaceholder}
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <div 
+                              className="font-bold font-mono text-slate-800 dark:text-slate-200 cursor-pointer select-none"
+                              onClick={() => handleStartEdit(e)}
+                              title="Click to edit"
+                            >
+                              {formatRs(e.amount)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          {isEditing ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEdit(e.id)}
+                                className="p-1.5 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all cursor-pointer"
+                                title={t.saveBtn || "Save"}
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                                title={t.cancelBtn || "Cancel"}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(e)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all cursor-pointer"
+                                title={t.editBtn || "Edit"}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onDeleteEntry(e.id)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all cursor-pointer"
+                                title="Delete entry"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
                 </AnimatePresence>
               )}
             </tbody>

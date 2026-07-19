@@ -254,6 +254,13 @@ export default function App() {
     showToast(t.toastDeleted, 'info');
   };
 
+  // Actions: Update Entry
+  const handleUpdateEntry = (id: string, name: string, amount: number) => {
+    const updated = entries.map(e => e.id === id ? { ...e, name, amount } : e);
+    handleUpdateEntries(updated);
+    showToast(language === 'en' ? 'Entry updated successfully!' : 'ریکارڈ کامیابی سے تبدیل ہو گیا!', 'success');
+  };
+
   // Actions: Manage Cities
   const handleAddCity = (name: string) => {
     if (cities.some(c => c.toLowerCase() === name.toLowerCase())) {
@@ -634,6 +641,7 @@ export default function App() {
                   onUpdatePrevAmount={val => updatePrevAmountOverride('sale', val)}
                   onAddEntry={(name, amt) => handleAddEntry('sale', name, amt)}
                   onDeleteEntry={handleDeleteEntry}
+                  onUpdateEntry={handleUpdateEntry}
                   t={t}
                 />
               )}
@@ -648,6 +656,7 @@ export default function App() {
                   onUpdatePrevAmount={val => updatePrevAmountOverride('received', val)}
                   onAddEntry={(name, amt) => handleAddEntry('received', name, amt)}
                   onDeleteEntry={handleDeleteEntry}
+                  onUpdateEntry={handleUpdateEntry}
                   t={t}
                 />
               )}
@@ -662,6 +671,7 @@ export default function App() {
                   onUpdatePrevAmount={val => updatePrevAmountOverride('payment', val)}
                   onAddEntry={(name, amt) => handleAddEntry('payment', name, amt)}
                   onDeleteEntry={handleDeleteEntry}
+                  onUpdateEntry={handleUpdateEntry}
                   t={t}
                 />
               )}

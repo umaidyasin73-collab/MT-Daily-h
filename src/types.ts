@@ -102,4 +102,8 @@ export interface TranslationSet {
   sortTime: string;
   sortAmountDesc: string;
   sortAmountAsc: string;
+  editBtn?: string;
+  saveBtn?: string;
+  cancelBtn?: string;
+  updateTitle?: string;
 }
